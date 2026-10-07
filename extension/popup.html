@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Page Memory</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <nav role="tablist">
+        <button role="tab" id="tab-save" aria-selected="true" aria-controls="panel-save">Save</button>
+        <button role="tab" id="tab-search" aria-selected="false" aria-controls="panel-search">Search</button>
+      </nav>
+      <button id="open-options" class="icon-button" title="Settings" aria-label="Settings">⚙</button>
+    </header>
+
+    <section id="panel-save" role="tabpanel" aria-labelledby="tab-save">
+      <div class="page-card">
+        <div id="page-title" class="page-title">Reading page…</div>
+        <div id="page-url" class="page-url"></div>
+        <div id="page-stats" class="muted"></div>
+      </div>
+
+      <label id="selection-row" class="check" hidden>
+        <input type="checkbox" id="selection-only" />
+        <span>Save only the selected text</span>
+      </label>
+
+      <label for="note">Your note</label>
+      <textarea id="note" rows="4" placeholder="Why does this matter? What should you remember?"></textarea>
+
+      <label for="tags">Tags</label>
+      <input id="tags" type="text" placeholder="comma, separated, tags" />
+
+      <button id="save" class="primary" disabled>Save page</button>
+      <div id="save-status" class="status" role="status"></div>
+    </section>
+
+    <section id="panel-search" role="tabpanel" aria-labelledby="tab-search" hidden>
+      <form id="search-form">
+        <input id="query" type="search" placeholder="Ask about something you've saved…" autocomplete="off" />
+        <button class="primary" type="submit">Search</button>
+      </form>
+      <div id="results-heading" class="muted"></div>
+      <ul id="results"></ul>
+      <div id="search-status" class="status" role="status"></div>
+    </section>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

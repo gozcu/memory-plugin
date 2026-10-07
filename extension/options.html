@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Page Memory settings</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body class="options">
+    <form id="options-form">
+      <label for="server-url">Server URL</label>
+      <input id="server-url" type="url" required placeholder="http://localhost:8765" />
+      <div class="muted">Where the Page Memory service is running.</div>
+
+      <label for="api-key">API key (optional)</label>
+      <input id="api-key" type="password" autocomplete="off" />
+      <div class="muted">Only needed if the server was started with MEMORY_API_KEY set.</div>
+
+      <p>
+        <button class="primary" type="submit">Save and test connection</button>
+      </p>
+      <div id="options-status" class="status" role="status"></div>
+    </form>
+    <script src="options.js"></script>
+  </body>
+</html>

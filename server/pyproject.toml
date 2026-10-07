@@ -1,0 +1,10 @@
+[project]
+name = "page-memory-server"
+version = "0.1.0"
+description = "Local service that stores visited pages in a vector DB for semantic search"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "chromadb>=1.0",
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+]

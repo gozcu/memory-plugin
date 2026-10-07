@@ -1,0 +1,263 @@
+:root {
+  color-scheme: light dark;
+  --bg: #ffffff;
+  --surface: #f4f5f8;
+  --text: #1b1d23;
+  --muted: #6a7080;
+  --border: #dcdfe6;
+  --accent: #4f46e5;
+  --accent-text: #ffffff;
+  --error: #c0392b;
+  --success: #1e8e5a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1d22;
+    --surface: #27292f;
+    --text: #eceef2;
+    --muted: #9aa1b0;
+    --border: #3a3d46;
+    --accent: #8b84ff;
+    --accent-text: #14151a;
+    --error: #ff8a7a;
+    --success: #5fd39a;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  width: 380px;
+  margin: 0;
+  padding: 12px;
+  background: var(--bg);
+  color: var(--text);
+  font: 13px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+body.options {
+  width: auto;
+  max-width: 460px;
+  padding: 16px;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+nav {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  background: var(--surface);
+  border-radius: 8px;
+}
+
+nav button {
+  padding: 5px 16px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+nav button[aria-selected="true"] {
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.15);
+}
+
+.icon-button {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.page-card {
+  padding: 10px;
+  margin-bottom: 10px;
+  background: var(--surface);
+  border-radius: 8px;
+}
+
+.page-title {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.page-url {
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+label {
+  display: block;
+  margin: 10px 0 4px;
+  font-weight: 600;
+}
+
+label.check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 400;
+}
+
+input[type="text"],
+input[type="search"],
+input[type="url"],
+input[type="password"],
+textarea {
+  width: 100%;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+
+textarea {
+  resize: vertical;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+button.primary {
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button.primary:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+#save {
+  width: 100%;
+  margin-top: 12px;
+}
+
+.status {
+  min-height: 18px;
+  margin-top: 8px;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.status.error {
+  color: var(--error);
+}
+
+.status.success {
+  color: var(--success);
+}
+
+#search-form {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+#results {
+  max-height: 380px;
+  margin: 6px 0 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+#results li {
+  padding: 9px 0;
+  border-top: 1px solid var(--border);
+}
+
+.result-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.result-head a {
+  flex: 1;
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.result-head a:hover {
+  text-decoration: underline;
+}
+
+.result-meta {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.result-snippet {
+  display: -webkit-box;
+  margin-top: 3px;
+  overflow: hidden;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.result-note {
+  margin-top: 4px;
+  padding-left: 8px;
+  border-left: 2px solid var(--accent);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.tag {
+  display: inline-block;
+  margin: 4px 4px 0 0;
+  padding: 1px 7px;
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.delete {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.delete:hover {
+  color: var(--error);
+}
