@@ -38,7 +38,13 @@
         <input id="query" type="search" placeholder="Ask about something you've saved…" autocomplete="off" />
         <button class="primary" type="submit">Search</button>
       </form>
-      <div id="search-progress" class="progress" role="progressbar" aria-label="Searching" hidden><div></div></div>
+      <div id="search-progress" hidden>
+        <div class="progress" role="progressbar" aria-label="Searching"><div></div></div>
+        <div class="progress-info">
+          <span id="search-stage" class="progress-stage" role="status"></span>
+          <span id="search-elapsed" class="progress-elapsed" aria-hidden="true"></span>
+        </div>
+      </div>
       <div id="results-heading" class="muted"></div>
       <ul id="results"></ul>
       <div id="search-status" class="status" role="status"></div>

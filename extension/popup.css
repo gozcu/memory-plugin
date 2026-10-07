@@ -187,19 +187,73 @@ button.primary:disabled {
   margin-bottom: 8px;
 }
 
+#search-progress {
+  margin-bottom: 8px;
+}
+
 .progress {
   height: 4px;
-  margin-bottom: 8px;
   overflow: hidden;
   background: var(--surface);
   border-radius: 2px;
 }
 
 .progress div {
+  position: relative;
   width: 0;
   height: 100%;
+  overflow: hidden;
   background: var(--accent);
   border-radius: 2px;
+}
+
+/* A moving highlight keeps the bar alive while it waits near full. */
+.progress div::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.55), transparent);
+  animation: progress-shimmer 1.4s linear infinite;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.progress-stage::after {
+  content: "…";
+  animation: progress-pulse 1.4s ease-in-out infinite;
+}
+
+.progress-elapsed {
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes progress-shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes progress-pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progress div::after,
+  .progress-stage::after {
+    animation: none;
+  }
 }
 
 #results {

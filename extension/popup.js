@@ -1,6 +1,15 @@
 const MAX_TEXT_CHARS = 20_000;
 const SNIPPET_CHARS = 240;
 const SEARCH_ESTIMATE_MS = 30_000;
+const PROGRESS_FINISH_MS = 200;
+// Estimated stages of a search, each starting at a fraction of SEARCH_ESTIMATE_MS.
+const SEARCH_STAGES = [
+  { at: 0, label: "Submitting" },
+  { at: 0.05, label: "Understanding your request" },
+  { at: 0.25, label: "Working" },
+  { at: 0.5, label: "Searching your records" },
+  { at: 1, label: "Still searching your records" },
+];
 
 const $ = (id) => document.getElementById(id);
 
@@ -193,7 +202,7 @@ async function runSearch() {
   }
   const button = $("search-form").querySelector("button");
   button.disabled = true;
-  setStatus(status, "Searching… this usually takes about 30 seconds.");
+  setStatus(status, "");
   showProgress(true);
   try {
     const { results } = await send("search", { q });
@@ -210,16 +219,48 @@ async function runSearch() {
 
 // The search call gives no progress of its own, so the bar is an estimate: it
 // fills over SEARCH_ESTIMATE_MS and waits just short of full until the reply.
+// The stage label and elapsed-seconds ticker follow the same clock.
+let progressTicker = 0;
+let progressHide = 0;
+
 function showProgress(active) {
-  const bar = $("search-progress");
+  const box = $("search-progress");
+  const bar = box.querySelector(".progress");
   const fill = bar.firstElementChild;
-  bar.hidden = !active;
+  clearInterval(progressTicker);
+  clearTimeout(progressHide);
+
+  if (!active) {
+    if (box.hidden) return;
+    // Snap to full before hiding so the bar visibly finishes.
+    fill.style.transition = `width ${PROGRESS_FINISH_MS}ms ease-out`;
+    fill.style.width = "100%";
+    progressHide = setTimeout(() => {
+      box.hidden = true;
+    }, PROGRESS_FINISH_MS + 100);
+    return;
+  }
+
+  const started = Date.now();
+  const tick = () => {
+    const elapsed = Date.now() - started;
+    const stage = SEARCH_STAGES.findLast((s) => elapsed >= s.at * SEARCH_ESTIMATE_MS);
+    // Only touch the label when it changes, so screen readers aren't re-notified every second.
+    if ($("search-stage").textContent !== stage.label) {
+      $("search-stage").textContent = stage.label;
+      bar.setAttribute("aria-valuetext", stage.label);
+    }
+    $("search-elapsed").textContent = `${Math.floor(elapsed / 1000)}s`;
+  };
+
+  box.hidden = false;
   fill.style.transition = "none";
   fill.style.width = "0";
-  if (!active) return;
   fill.getBoundingClientRect(); // commit the reset before animating
   fill.style.transition = `width ${SEARCH_ESTIMATE_MS}ms cubic-bezier(0.2, 0.6, 0.4, 1)`;
   fill.style.width = "95%";
+  tick();
+  progressTicker = setInterval(tick, 250);
 }
 
 // ---------- Wiring ----------
