@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Page Memory",
-  "version": "0.1.0",
-  "description": "Save the page you're on, with your own notes, to a vector database and search it later by meaning.",
+  "version": "0.2.0",
+  "description": "Save the page you're on, with your own notes, to your status402 memory and search it later by meaning.",
   "minimum_chrome_version": "110",
   "icons": {
     "16": "icons/icon16.png",
@@ -25,8 +25,7 @@
     "open_in_tab": false
   },
   "permissions": ["activeTab", "scripting", "storage"],
-  "host_permissions": ["http://localhost/*", "http://127.0.0.1/*"],
-  "optional_host_permissions": ["https://*/*", "http://*/*"],
+  "host_permissions": ["https://platform.status402.io/*"],
   "commands": {
     "_execute_action": {
       "suggested_key": {

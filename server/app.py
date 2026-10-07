@@ -1,7 +1,7 @@
 """Page Memory server: stores pages sent by the browser extension in ChromaDB.
 
-Each saved page becomes one "head" chunk (title, description, the user's note
-and tags) plus N "body" chunks of page text. Search runs over all chunks and
+Each saved page becomes one "head" chunk (title, description and the user's
+note) plus N "body" chunks of page text. Search runs over all chunks and
 collapses the hits back to pages.
 """
 
@@ -68,7 +68,6 @@ class PageIn(BaseModel):
     description: str = Field("", max_length=5000)
     text: str = Field("", max_length=MAX_TEXT_CHARS)
     note: str = Field("", max_length=20_000)
-    tags: list[str] = Field(default_factory=list, max_length=50)
 
 
 def page_id_for(url: str) -> str:
@@ -100,7 +99,6 @@ def to_result(meta: dict, snippet: str, score: float | None = None) -> dict:
         "url": meta["url"],
         "title": meta["title"],
         "note": meta["note"],
-        "tags": [t for t in meta["tags"].split(",") if t],
         "saved_at": meta["saved_at"],
         "snippet": snippet,
         "score": score,
@@ -123,22 +121,16 @@ def health():
 def save_page(page: PageIn):
     page_id = page_id_for(page.url)
     title = page.title.strip() or page.url
-    tags = sorted({t.strip().lower().replace(",", " ") for t in page.tags if t.strip()})
     meta = {
         "page_id": page_id,
         "url": page.url,
         "title": title,
         "description": page.description.strip(),
         "note": page.note.strip(),
-        "tags": ",".join(tags),
         "saved_at": int(time.time()),
     }
 
-    head = "\n".join(
-        part
-        for part in (title, meta["description"], meta["note"], " ".join(tags))
-        if part
-    )
+    head = "\n".join(part for part in (title, meta["description"], meta["note"]) if part)
     documents = [head] + [f"{title}\n{chunk}" for chunk in chunk_text(page.text)]
     metadatas = [
         {**meta, "kind": "head" if i == 0 else "body", "chunk_index": i}

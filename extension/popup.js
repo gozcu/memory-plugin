@@ -1,4 +1,6 @@
-const MAX_TEXT_CHARS = 400_000;
+const MAX_TEXT_CHARS = 20_000;
+const SNIPPET_CHARS = 240;
+const SEARCH_ESTIMATE_MS = 30_000;
 
 const $ = (id) => document.getElementById(id);
 
@@ -64,19 +66,29 @@ async function loadPage() {
     $("page-stats").textContent = "This kind of page can't be saved.";
     return;
   }
+}
 
-  // If this URL was saved before, bring back the note and tags for editing.
-  try {
-    const { page: saved } = await send("lookup", { url: page.url });
-    if (saved) {
-      $("note").value ||= saved.note;
-      $("tags").value ||= saved.tags.join(", ");
-      $("save").textContent = "Update saved page";
-      setStatus($("save-status"), `Saved on ${formatDate(saved.saved_at)}. Saving again replaces it.`);
-    }
-  } catch (err) {
-    setStatus($("save-status"), err.message, "error");
-  }
+// Search only returns a memory's content, so the title, link and note travel
+// inside it as a header block: title, URL, optional "Note: …", blank line, text.
+function buildContent({ title, url, note, text }) {
+  const head = [title.replace(/\s+/g, " ").trim() || url, url];
+  if (note) head.push(`Note: ${note.replace(/\n{2,}/g, "\n")}`);
+  return `${head.join("\n")}\n\n${text}`.trim();
+}
+
+function parseContent(content) {
+  const split = content.indexOf("\n\n");
+  const head = (split === -1 ? content : content.slice(0, split)).split("\n");
+  const body = split === -1 ? "" : content.slice(split + 2);
+  // Memories saved by other clients have no header; show them as plain text.
+  if (!/^(https?|file):/.test(head[1] ?? "")) return { title: "", url: "", note: "", body: content };
+  const note = head.slice(2).join("\n");
+  return {
+    title: head[0],
+    url: head[1],
+    note: note.startsWith("Note: ") ? note.slice(6) : "",
+    body: note && !note.startsWith("Note: ") ? `${note}\n\n${body}` : body,
+  };
 }
 
 async function savePage() {
@@ -86,18 +98,14 @@ async function savePage() {
   setStatus(status, "Saving…");
   try {
     const useSelection = $("selection-only").checked && page.selection;
-    const { chunks } = await send("save", {
-      page: {
-        url: page.url,
-        title: page.title,
-        description: page.description,
-        text: useSelection ? page.selection : page.text,
-        note: $("note").value,
-        tags: $("tags").value.split(",").map((t) => t.trim()).filter(Boolean),
-      },
+    const note = $("note").value.trim();
+    const text = useSelection ? page.selection : page.text || page.description;
+    await send("save", {
+      content: buildContent({ title: page.title, url: page.url, note, text }),
+      metadata: { url: page.url, title: page.title, note, saved_at: new Date().toISOString() },
     });
-    button.textContent = "Update saved page";
-    setStatus(status, `Saved (${chunks} chunk${chunks === 1 ? "" : "s"} indexed).`, "success");
+    // The service indexes the memory in the background after accepting it.
+    setStatus(status, "Saved. It will show up in search in a few minutes.", "success");
   } catch (err) {
     setStatus(status, err.message, "error");
   } finally {
@@ -107,12 +115,10 @@ async function savePage() {
 
 // ---------- Search tab ----------
 
-function formatDate(epochSeconds) {
-  return new Date(epochSeconds * 1000).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+function formatDate(iso) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 }
 
 function hostOf(url) {
@@ -133,13 +139,19 @@ function el(tag, className, text) {
 // Page-derived strings are only ever set via textContent, never as HTML.
 function renderResult(result) {
   const item = el("li");
+  const { title, url, note, body } = parseContent(String(result.content ?? ""));
+  const snippet = body.length > SNIPPET_CHARS ? `${body.slice(0, SNIPPET_CHARS).trimEnd()}…` : body;
 
   const head = el("div", "result-head");
-  const link = el("a", "", result.title);
-  if (/^(https?|file):/.test(result.url)) link.href = result.url;
-  link.target = "_blank";
-  link.rel = "noreferrer";
-  head.append(link);
+  if (url) {
+    const link = el("a", "", title || url);
+    link.href = url;
+    link.target = "_blank";
+    link.rel = "noreferrer";
+    head.append(link);
+  } else {
+    head.append(el("span", "", "Saved memory"));
+  }
 
   const remove = el("button", "delete", "Delete");
   remove.addEventListener("click", async () => {
@@ -149,35 +161,65 @@ function renderResult(result) {
       return;
     }
     try {
-      await send("remove", { pageId: result.page_id });
+      await send("remove", { memoryId: result.id });
       item.remove();
     } catch (err) {
       setStatus($("search-status"), err.message, "error");
     }
   });
-  head.append(remove);
+  // Search results carry no memory id, and without one there is nothing to delete.
+  if (result.id) head.append(remove);
   item.append(head);
 
-  const match = result.score == null ? "" : ` · ${Math.round(result.score * 100)}% match`;
-  item.append(el("div", "result-meta", `${hostOf(result.url)} · ${formatDate(result.saved_at)}${match}`));
-  if (result.snippet) item.append(el("div", "result-snippet", result.snippet));
-  if (result.note) item.append(el("div", "result-note", result.note));
-  for (const tag of result.tags) item.append(el("span", "tag", tag));
+  const match =
+    typeof result.distance === "number"
+      ? `${Math.round(Math.max(0, Math.min(1, 1 - result.distance)) * 100)}% match`
+      : "";
+  const meta = [url && hostOf(url), formatDate(result.created_at), match].filter(Boolean);
+  item.append(el("div", "result-meta", meta.join(" · ")));
+  if (snippet) item.append(el("div", "result-snippet", snippet));
+  if (note) item.append(el("div", "result-note", note));
   return item;
 }
 
 async function runSearch() {
   const q = $("query").value.trim();
   const status = $("search-status");
-  setStatus(status, q ? "Searching…" : "");
+  if (!q) {
+    $("results-heading").textContent = "";
+    $("results").replaceChildren();
+    setStatus(status, "");
+    return;
+  }
+  const button = $("search-form").querySelector("button");
+  button.disabled = true;
+  setStatus(status, "Searching… this usually takes about 30 seconds.");
+  showProgress(true);
   try {
-    const { results } = q ? await send("search", { q }) : await send("recent");
-    $("results-heading").textContent = q ? `Best matches for “${q}”` : "Recently saved";
+    const { results } = await send("search", { q });
+    $("results-heading").textContent = `Best matches for “${q}”`;
     $("results").replaceChildren(...results.map(renderResult));
-    setStatus(status, results.length ? "" : q ? "Nothing matched." : "Nothing saved yet.");
+    setStatus(status, results.length ? "" : "Nothing matched.");
   } catch (err) {
     setStatus(status, err.message, "error");
+  } finally {
+    showProgress(false);
+    button.disabled = false;
   }
+}
+
+// The search call gives no progress of its own, so the bar is an estimate: it
+// fills over SEARCH_ESTIMATE_MS and waits just short of full until the reply.
+function showProgress(active) {
+  const bar = $("search-progress");
+  const fill = bar.firstElementChild;
+  bar.hidden = !active;
+  fill.style.transition = "none";
+  fill.style.width = "0";
+  if (!active) return;
+  fill.getBoundingClientRect(); // commit the reset before animating
+  fill.style.transition = `width ${SEARCH_ESTIMATE_MS}ms cubic-bezier(0.2, 0.6, 0.4, 1)`;
+  fill.style.width = "95%";
 }
 
 // ---------- Wiring ----------
@@ -189,7 +231,6 @@ function showTab(name) {
   }
   if (name === "search") {
     $("query").focus();
-    runSearch();
   }
 }
 
@@ -203,3 +244,8 @@ $("search-form").addEventListener("submit", (event) => {
 });
 
 loadPage();
+chrome.storage.local.get({ token: "", salt: "" }).then(({ token, salt }) => {
+  if (!token || !salt) {
+    setStatus($("save-status"), "Add your security token and salt in settings (⚙) to start saving.");
+  }
+});

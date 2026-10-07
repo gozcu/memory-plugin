@@ -1,51 +1,60 @@
 # Page Memory
 
 A Chrome / Edge extension that saves the page you're on, together with your own
-notes and tags, into a vector database so you can find it again later by meaning
+notes, into your status402 memory so you can find it again later by meaning
 rather than by exact keywords.
 
 - `extension/` — Manifest V3 extension (the same folder loads in Chrome and Edge)
-- `server/` — local FastAPI service storing pages in ChromaDB, with embeddings
-  computed locally (no API keys, nothing leaves your machine)
+- `server/` — the earlier local FastAPI + ChromaDB backend; the extension no
+  longer talks to it
 
-## 1. Start the server
+## 1. Get a security token and choose a salt
 
-```bash
-cd server && uv run app.py
+Tokens are issued at [status402.io](https://status402.io). The extension talks
+to a fixed MCP endpoint and sends the token as a `Bearer` header:
+
+```
+https://platform.status402.io/mcp/paid/veryliz/scope/dev/gozcu
 ```
 
-The first run downloads the embedding model (~80MB). The server listens on
-`http://127.0.0.1:8765` and keeps its data in `server/data/`.
-
-Environment variables: `MEMORY_PORT`, `MEMORY_HOST`, `MEMORY_DATA_DIR`, and
-`MEMORY_API_KEY` (if set, the same key must be entered in the extension's settings).
+Every request also carries your salt in the `x-secret-key` header. Both the
+token and the salt are required.
 
 ## 2. Load the extension
 
 1. Open `chrome://extensions` (Chrome) or `edge://extensions` (Edge).
 2. Turn on **Developer mode**.
 3. Click **Load unpacked** and choose the `extension/` folder.
+4. Open the extension's settings (⚙ in the popup), paste your security token and
+   salt, and click **Save and test connection**.
 
 ## 3. Use it
 
 Click the toolbar icon (or press `Ctrl+Shift+M` / `Cmd+Shift+M`):
 
-- **Save** — shows the current page, lets you add a note and tags, and stores it.
-  If you have text selected you can save just the selection. Saving a URL again
-  replaces the earlier version.
-- **Search** — type a question or phrase to get the closest saved pages; leave it
-  empty to see what you saved most recently.
+- **Save** — shows the current page, lets you add a note, and stores it.
+  If you have text selected you can save just the selection.
+- **Search** — type a question or phrase to get the closest memories. Results
+  can't be deleted from there for now: search no longer returns memory ids.
 
 The extension only reads a page when you open the popup on it (`activeTab`); it
 has no standing access to your browsing.
 
-## API
+## MCP tools
 
-| Method | Path | Purpose |
+| Tool | Used for | Arguments |
 | --- | --- | --- |
-| `POST` | `/pages` | Save a page: `{url, title, description, text, note, tags}` |
-| `GET` | `/pages?limit=` | Recently saved pages |
-| `GET` | `/pages/by-url?url=` | Look up one saved page |
-| `GET` | `/search?q=&limit=` | Semantic search |
-| `DELETE` | `/pages/{page_id}` | Remove a page |
-| `GET` | `/health` | Liveness check |
+| `memorise` | Save a page | `content`, `metadata` (JSON string) |
+| `recollect` | Search | `query` |
+| `forget` | Delete a memory | `memory_id` |
+
+Tool names are matched by suffix, so a server prefix (`p1-gozcu-memorise`) works
+too. `memorise` is asynchronous: the service accepts the page and stores it in
+the background, so a new memory shows up in search a few minutes after saving.
+`recollect` answers within the call, typically in about 30 seconds.
+
+Search returns only a memory's content, so each saved page is stored as one
+memory whose content starts with a header block — title, URL and an optional
+`Note: …` line — followed by a blank line and up to 20,000 characters of page
+text. Memories without that header (saved by other clients) are shown as plain
+text.

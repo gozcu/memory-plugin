@@ -7,13 +7,16 @@
   </head>
   <body class="options">
     <form id="options-form">
-      <label for="server-url">Server URL</label>
-      <input id="server-url" type="url" required placeholder="http://localhost:8765" />
-      <div class="muted">Where the Page Memory service is running.</div>
+      <label for="token">Security token</label>
+      <input id="token" type="password" autocomplete="off" required />
+      <div class="muted">
+        Get your token at
+        <a href="https://status402.io" target="_blank" rel="noreferrer">status402.io</a>.
+      </div>
 
-      <label for="api-key">API key (optional)</label>
-      <input id="api-key" type="password" autocomplete="off" />
-      <div class="muted">Only needed if the server was started with MEMORY_API_KEY set.</div>
+      <label for="salt">Salt</label>
+      <input id="salt" type="password" autocomplete="off" required />
+      <div class="muted">Sent with every request as the <code>x-secret-key</code> header.</div>
 
       <p>
         <button class="primary" type="submit">Save and test connection</button>

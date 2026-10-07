@@ -29,9 +29,6 @@
       <label for="note">Your note</label>
       <textarea id="note" rows="4" placeholder="Why does this matter? What should you remember?"></textarea>
 
-      <label for="tags">Tags</label>
-      <input id="tags" type="text" placeholder="comma, separated, tags" />
-
       <button id="save" class="primary" disabled>Save page</button>
       <div id="save-status" class="status" role="status"></div>
     </section>
@@ -41,6 +38,7 @@
         <input id="query" type="search" placeholder="Ask about something you've saved…" autocomplete="off" />
         <button class="primary" type="submit">Search</button>
       </form>
+      <div id="search-progress" class="progress" role="progressbar" aria-label="Searching" hidden><div></div></div>
       <div id="results-heading" class="muted"></div>
       <ul id="results"></ul>
       <div id="search-status" class="status" role="status"></div>

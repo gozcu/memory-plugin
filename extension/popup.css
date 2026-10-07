@@ -187,6 +187,21 @@ button.primary:disabled {
   margin-bottom: 8px;
 }
 
+.progress {
+  height: 4px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  background: var(--surface);
+  border-radius: 2px;
+}
+
+.progress div {
+  width: 0;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
 #results {
   max-height: 380px;
   margin: 6px 0 0;
@@ -239,16 +254,6 @@ button.primary:disabled {
   overflow-wrap: anywhere;
 }
 
-.tag {
-  display: inline-block;
-  margin: 4px 4px 0 0;
-  padding: 1px 7px;
-  border-radius: 10px;
-  background: var(--surface);
-  color: var(--muted);
-  font-size: 11px;
-}
-
 .delete {
   border: 0;
   background: transparent;
@@ -260,4 +265,8 @@ button.primary:disabled {
 
 .delete:hover {
   color: var(--error);
+}
+
+.muted a {
+  color: var(--accent);
 }

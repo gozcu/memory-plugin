@@ -1,7 +1,5 @@
-const DEFAULTS = { serverUrl: "http://localhost:8765", apiKey: "" };
-
-const urlInput = document.getElementById("server-url");
-const keyInput = document.getElementById("api-key");
+const tokenInput = document.getElementById("token");
+const saltInput = document.getElementById("salt");
 const status = document.getElementById("options-status");
 
 function setStatus(text, kind = "") {
@@ -9,33 +7,36 @@ function setStatus(text, kind = "") {
   status.className = `status ${kind}`.trim();
 }
 
-chrome.storage.local.get(DEFAULTS).then(({ serverUrl, apiKey }) => {
-  urlInput.value = serverUrl;
-  keyInput.value = apiKey;
+chrome.storage.local.get({ token: "", salt: "" }).then(({ token, salt }) => {
+  tokenInput.value = token;
+  saltInput.value = salt;
 });
 
 document.getElementById("options-form").addEventListener("submit", async (event) => {
   event.preventDefault();
-  let url;
-  try {
-    url = new URL(urlInput.value.trim());
-  } catch {
-    setStatus("That doesn't look like a valid URL.", "error");
+  // Accept a pasted "Bearer …" header value as well as the bare token.
+  const token = tokenInput.value.trim().replace(/^Bearer\s+/i, "");
+  if (!token) {
+    setStatus("Enter your security token.", "error");
+    return;
+  }
+  const salt = saltInput.value.trim();
+  if (!salt) {
+    setStatus("Enter your salt.", "error");
+    return;
+  }
+  // The salt travels as an HTTP header value, which must be printable ASCII.
+  if (!/^[\x20-\x7e]+$/.test(salt)) {
+    setStatus("The salt can only contain plain ASCII characters.", "error");
     return;
   }
 
-  // Localhost is granted in the manifest; any other server needs the user's
-  // approval, which must be requested from this click handler.
-  const granted = await chrome.permissions.request({ origins: [`${url.origin}/*`] });
-  if (!granted) {
-    setStatus(`Permission to contact ${url.origin} was not granted.`, "error");
-    return;
-  }
-
-  await chrome.storage.local.set({ serverUrl: url.origin, apiKey: keyInput.value.trim() });
-  urlInput.value = url.origin;
+  await chrome.storage.local.set({ token, salt });
+  tokenInput.value = token;
+  saltInput.value = salt;
+  setStatus("Testing…");
 
   const res = await chrome.runtime.sendMessage({ type: "health" });
-  if (res?.ok) setStatus("Saved. Connected to the server.", "success");
+  if (res?.ok) setStatus("Saved. Connected to the memory service.", "success");
   else setStatus(`Saved, but: ${res?.error ?? "no response"}`, "error");
 });
