@@ -180,13 +180,16 @@ const routes = {
     return { status: "ok" };
   },
   save: async ({ content, metadata }) => {
-    // TEMPORARY: also carry the salt in the metadata while the x-secret-key
-    // header is being debugged. Metadata is stored unencrypted; remove this.
-    const { salt } = await getCredentials();
-    await runTool("memorise", { content, metadata: JSON.stringify({ ...metadata, salt }) });
+    await runTool("memorise", { content, metadata: JSON.stringify(metadata) });
     return { saved: true };
   },
-  search: async ({ q }) => ({ results: toResults(await runTool("recollect", { query: q })) }),
+  search: async ({ q }) => {
+    const results = toResults(await runTool("recollect", { query: q }));
+    // Kept for the browser session (in memory only) so the popup can show the
+    // last search again after it has been closed.
+    await chrome.storage.session.set({ lastSearch: { q, results } });
+    return { results };
+  },
   remove: async ({ memoryId }) => {
     await runTool("forget", { memory_id: memoryId });
     return { deleted: true };

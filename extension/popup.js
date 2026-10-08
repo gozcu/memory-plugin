@@ -1,5 +1,4 @@
-const MAX_TEXT_CHARS = 20_000;
-const SNIPPET_CHARS = 240;
+const MIN_DESCRIPTION_WORDS = 3;
 const SEARCH_ESTIMATE_MS = 30_000;
 const PROGRESS_FINISH_MS = 200;
 // Estimated stages of a search, each starting at a fraction of SEARCH_ESTIMATE_MS.
@@ -25,69 +24,71 @@ function setStatus(el, text, kind = "") {
 }
 
 // Runs inside the page, so it must be self-contained.
-function extractPage(maxChars) {
+function extractPage() {
   const meta = (name) =>
     document.querySelector(`meta[name="${name}"], meta[property="${name}"]`)?.content?.trim() ?? "";
-
-  // Prefer the main content region so navigation and footers don't drown it out.
-  const candidates = [...document.querySelectorAll("article, main, [role='main']")];
-  const main = candidates
-    .map((el) => el.innerText ?? "")
-    .sort((a, b) => b.length - a.length)[0];
-  const body = document.body?.innerText ?? "";
-  const text = main && main.length > 500 ? main : body;
 
   return {
     url: location.href,
     title: document.title,
     description: meta("description") || meta("og:description"),
-    selection: String(getSelection() ?? "").trim().slice(0, maxChars),
-    text: text.slice(0, maxChars),
   };
 }
 
 // ---------- Save tab ----------
 
 let page = null;
+let saveable = false;
+let saving = false;
+
+function descriptionWords() {
+  return $("description").value.trim().split(/\s+/).filter(Boolean).length;
+}
+
+// Saving needs a saveable page and a description of at least a few words.
+function updateSave() {
+  const missing = MIN_DESCRIPTION_WORDS - descriptionWords();
+  $("description-hint").textContent =
+    missing > 0 ? `Required: at least ${MIN_DESCRIPTION_WORDS} words (${missing} more).` : "";
+  $("save").disabled = !saveable || saving || missing > 0;
+}
 
 async function loadPage() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  page = { url: tab?.url ?? "", title: tab?.title ?? "", description: "", selection: "", text: "" };
+  page = { url: tab?.url ?? "", title: tab?.title ?? "", description: "" };
 
   try {
     const [injection] = await chrome.scripting.executeScript({
       target: { tabId: tab.id },
       func: extractPage,
-      args: [MAX_TEXT_CHARS],
     });
     page = injection.result;
-    $("page-stats").textContent = `${page.text.length.toLocaleString()} characters of page text`;
   } catch {
-    // Browser pages (chrome://, edge://, the extension stores) can't be read.
-    $("page-stats").textContent = "This page's content can't be read; only the link and your note will be saved.";
+    // Browser pages (chrome://, edge://, the extension stores) can't be read;
+    // the tab's own title and link are enough to go on.
   }
 
   $("page-title").textContent = page.title || page.url || "Untitled page";
   $("page-url").textContent = page.url;
-  $("selection-row").hidden = !page.selection;
-  $("save").disabled = !/^(https?|file):/.test(page.url);
-  if ($("save").disabled) {
-    $("page-stats").textContent = "This kind of page can't be saved.";
-    return;
-  }
+  // Start from the page's own description, unless the user already began typing.
+  if (!$("description").value) $("description").value = page.description;
+  saveable = /^(https?|file):/.test(page.url);
+  if (!saveable) $("page-stats").textContent = "This kind of page can't be saved.";
+  updateSave();
 }
 
-// Search only returns a memory's content, so the title, link and note travel
-// inside it as a header block: title, URL, optional "Note: …", blank line, text.
-function buildContent({ title, url, note, text }) {
+// Search only returns a memory's content, so the title, link and description travel
+// inside it as a header block: title, URL, "Note: …". The page text is not sent.
+function buildContent({ title, url, note }) {
   const head = [title.replace(/\s+/g, " ").trim() || url, url];
   if (note) head.push(`Note: ${note.replace(/\n{2,}/g, "\n")}`);
-  return `${head.join("\n")}\n\n${text}`.trim();
+  return head.join("\n");
 }
 
 function parseContent(content) {
   const split = content.indexOf("\n\n");
   const head = (split === -1 ? content : content.slice(0, split)).split("\n");
+  // Older memories also carry the page text after a blank line.
   const body = split === -1 ? "" : content.slice(split + 2);
   // Memories saved by other clients have no header; show them as plain text.
   if (!/^(https?|file):/.test(head[1] ?? "")) return { title: "", url: "", note: "", body: content };
@@ -101,24 +102,27 @@ function parseContent(content) {
 }
 
 async function savePage() {
-  const button = $("save");
   const status = $("save-status");
-  button.disabled = true;
+  const description = $("description").value.trim();
+  if (descriptionWords() < MIN_DESCRIPTION_WORDS) {
+    setStatus(status, `Describe this page in at least ${MIN_DESCRIPTION_WORDS} words first.`, "error");
+    return;
+  }
+  saving = true;
+  updateSave();
   setStatus(status, "Saving…");
   try {
-    const useSelection = $("selection-only").checked && page.selection;
-    const note = $("note").value.trim();
-    const text = useSelection ? page.selection : page.text || page.description;
     await send("save", {
-      content: buildContent({ title: page.title, url: page.url, note, text }),
-      metadata: { url: page.url, title: page.title, note, saved_at: new Date().toISOString() },
+      content: buildContent({ title: page.title, url: page.url, note: description }),
+      metadata: { url: page.url, title: page.title, description, saved_at: new Date().toISOString() },
     });
     // The service indexes the memory in the background after accepting it.
     setStatus(status, "Saved. It will show up in search in a few minutes.", "success");
   } catch (err) {
     setStatus(status, err.message, "error");
   } finally {
-    button.disabled = false;
+    saving = false;
+    updateSave();
   }
 }
 
@@ -149,7 +153,6 @@ function el(tag, className, text) {
 function renderResult(result) {
   const item = el("li");
   const { title, url, note, body } = parseContent(String(result.content ?? ""));
-  const snippet = body.length > SNIPPET_CHARS ? `${body.slice(0, SNIPPET_CHARS).trimEnd()}…` : body;
 
   const head = el("div", "result-head");
   if (url) {
@@ -172,6 +175,12 @@ function renderResult(result) {
     try {
       await send("remove", { memoryId: result.id });
       item.remove();
+      updateCarousel();
+      const { lastSearch } = await chrome.storage.session.get("lastSearch");
+      if (lastSearch) {
+        lastSearch.results = lastSearch.results.filter((kept) => kept.id !== result.id);
+        await chrome.storage.session.set({ lastSearch });
+      }
     } catch (err) {
       setStatus($("search-status"), err.message, "error");
     }
@@ -186,9 +195,44 @@ function renderResult(result) {
       : "";
   const meta = [url && hostOf(url), formatDate(result.created_at), match].filter(Boolean);
   item.append(el("div", "result-meta", meta.join(" · ")));
-  if (snippet) item.append(el("div", "result-snippet", snippet));
+  if (body) item.append(el("div", "result-body", body));
   if (note) item.append(el("div", "result-note", note));
   return item;
+}
+
+// Results are a carousel: one whole memory per slide, scrolled sideways by
+// swiping or with the buttons underneath.
+function currentSlide() {
+  const list = $("results");
+  let best = 0;
+  [...list.children].forEach((item, i) => {
+    const gap = Math.abs(item.offsetLeft - list.scrollLeft);
+    if (gap < Math.abs(list.children[best].offsetLeft - list.scrollLeft)) best = i;
+  });
+  return best;
+}
+
+function showSlide(index) {
+  const list = $("results");
+  const item = list.children[Math.max(0, Math.min(list.children.length - 1, index))];
+  if (item) list.scrollTo({ left: item.offsetLeft });
+}
+
+function updateCarousel() {
+  const count = $("results").children.length;
+  const index = currentSlide();
+  $("carousel-nav").hidden = count < 2;
+  $("carousel-count").textContent = `${index + 1} of ${count}`;
+  $("carousel-prev").disabled = index === 0;
+  $("carousel-next").disabled = index >= count - 1;
+}
+
+function showResults(q, results) {
+  $("results-heading").textContent = `Best matches for “${q}”`;
+  $("results").replaceChildren(...results.map(renderResult));
+  $("results").scrollLeft = 0;
+  updateCarousel();
+  setStatus($("search-status"), results.length ? "" : "Nothing matched.");
 }
 
 async function runSearch() {
@@ -197,7 +241,9 @@ async function runSearch() {
   if (!q) {
     $("results-heading").textContent = "";
     $("results").replaceChildren();
+    updateCarousel();
     setStatus(status, "");
+    chrome.storage.session.remove("lastSearch");
     return;
   }
   const button = $("search-form").querySelector("button");
@@ -206,9 +252,7 @@ async function runSearch() {
   showProgress(true);
   try {
     const { results } = await send("search", { q });
-    $("results-heading").textContent = `Best matches for “${q}”`;
-    $("results").replaceChildren(...results.map(renderResult));
-    setStatus(status, results.length ? "" : "Nothing matched.");
+    showResults(q, results);
   } catch (err) {
     setStatus(status, err.message, "error");
   } finally {
@@ -273,18 +317,32 @@ function showTab(name) {
   if (name === "search") {
     $("query").focus();
   }
+  chrome.storage.session.set({ tab: name });
 }
 
 $("tab-save").addEventListener("click", () => showTab("save"));
 $("tab-search").addEventListener("click", () => showTab("search"));
 $("open-options").addEventListener("click", () => chrome.runtime.openOptionsPage());
 $("save").addEventListener("click", savePage);
+$("description").addEventListener("input", updateSave);
+$("results").addEventListener("scroll", updateCarousel);
+$("carousel-prev").addEventListener("click", () => showSlide(currentSlide() - 1));
+$("carousel-next").addEventListener("click", () => showSlide(currentSlide() + 1));
 $("search-form").addEventListener("submit", (event) => {
   event.preventDefault();
   runSearch();
 });
 
 loadPage();
+// Closing the popup discards its page, so the last search and the open tab
+// are restored from session storage.
+chrome.storage.session.get({ lastSearch: null, tab: "save" }).then(({ lastSearch, tab }) => {
+  if (lastSearch) {
+    $("query").value = lastSearch.q;
+    showResults(lastSearch.q, lastSearch.results);
+  }
+  if (tab === "search") showTab("search");
+});
 chrome.storage.local.get({ token: "", salt: "" }).then(({ token, salt }) => {
   if (!token || !salt) {
     setStatus($("save-status"), "Add your security token and salt in settings (⚙) to start saving.");

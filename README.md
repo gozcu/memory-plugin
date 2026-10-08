@@ -32,9 +32,11 @@ token and the salt are required.
 
 Click the toolbar icon (or press `Ctrl+Shift+M` / `Cmd+Shift+M`):
 
-- **Save** — shows the current page, lets you add a note, and stores it.
-  If you have text selected you can save just the selection.
+- **Save** — shows the current page, asks for a short description (at
+  least three words), and stores it.
 - **Search** — type a question or phrase to get the closest memories. Results
+  show one at a time as a carousel, each with the whole memory; swipe or use
+  the arrows to move between them. Results
   can't be deleted from there for now: search no longer returns memory ids.
 
 The extension only reads a page when you open the popup on it (`activeTab`); it
@@ -54,7 +56,6 @@ the background, so a new memory shows up in search a few minutes after saving.
 `recollect` answers within the call, typically in about 30 seconds.
 
 Search returns only a memory's content, so each saved page is stored as one
-memory whose content starts with a header block — title, URL and an optional
-`Note: …` line — followed by a blank line and up to 20,000 characters of page
-text. Memories without that header (saved by other clients) are shown as plain
-text.
+memory whose content is a header block — title, URL and a `Note: …` line with
+your description. The page text itself is not sent. Memories without that
+header (saved by other clients) are shown as plain text.

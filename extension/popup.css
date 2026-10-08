@@ -115,13 +115,6 @@ label {
   font-weight: 600;
 }
 
-label.check {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 400;
-}
-
 input[type="text"],
 input[type="search"],
 input[type="url"],
@@ -254,19 +247,75 @@ button.primary:disabled {
   .progress-stage::after {
     animation: none;
   }
+
+  #results {
+    scroll-behavior: auto;
+  }
 }
 
+/* A sideways carousel: each result is a full-width slide that snaps into place. */
 #results {
-  max-height: 380px;
+  position: relative;
+  display: flex;
+  gap: 8px;
   margin: 6px 0 0;
   padding: 0;
-  overflow-y: auto;
+  overflow-x: auto;
   list-style: none;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
 }
 
 #results li {
-  padding: 9px 0;
-  border-top: 1px solid var(--border);
+  flex: 0 0 100%;
+  min-width: 0;
+  padding: 10px;
+  background: var(--surface);
+  border-radius: 8px;
+  scroll-snap-align: start;
+}
+
+#carousel-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+/* The flex display above would otherwise override the hidden attribute. */
+#carousel-nav[hidden] {
+  display: none;
+}
+
+#carousel-count {
+  min-width: 56px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.carousel-button {
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.carousel-button:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.carousel-button:disabled {
+  opacity: 0.35;
+  cursor: default;
 }
 
 .result-head {
@@ -292,12 +341,12 @@ button.primary:disabled {
   font-size: 11px;
 }
 
-.result-snippet {
-  display: -webkit-box;
-  margin-top: 3px;
-  overflow: hidden;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
+.result-body {
+  max-height: 260px;
+  margin-top: 6px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .result-note {

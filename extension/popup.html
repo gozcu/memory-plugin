@@ -21,13 +21,9 @@
         <div id="page-stats" class="muted"></div>
       </div>
 
-      <label id="selection-row" class="check" hidden>
-        <input type="checkbox" id="selection-only" />
-        <span>Save only the selected text</span>
-      </label>
-
-      <label for="note">Your note</label>
-      <textarea id="note" rows="4" placeholder="Why does this matter? What should you remember?"></textarea>
+      <label for="description">Description</label>
+      <textarea id="description" rows="4" required aria-describedby="description-hint" placeholder="Why does this matter? What should you remember?"></textarea>
+      <div id="description-hint" class="muted"></div>
 
       <button id="save" class="primary" disabled>Save page</button>
       <div id="save-status" class="status" role="status"></div>
@@ -47,6 +43,11 @@
       </div>
       <div id="results-heading" class="muted"></div>
       <ul id="results"></ul>
+      <div id="carousel-nav" hidden>
+        <button id="carousel-prev" class="carousel-button" aria-label="Previous result">‹</button>
+        <span id="carousel-count" class="muted" aria-live="polite"></span>
+        <button id="carousel-next" class="carousel-button" aria-label="Next result">›</button>
+      </div>
       <div id="search-status" class="status" role="status"></div>
     </section>
 
