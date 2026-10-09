@@ -345,6 +345,6 @@ chrome.storage.session.get({ lastSearch: null, tab: "save" }).then(({ lastSearch
 });
 chrome.storage.local.get({ token: "", salt: "" }).then(({ token, salt }) => {
   if (!token || !salt) {
-    setStatus($("save-status"), "Add your security token and salt in settings (⚙) to start saving.");
+    setStatus($("save-status"), "Add your security token and password in settings (⚙) to start saving.");
   }
 });

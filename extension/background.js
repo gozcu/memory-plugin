@@ -11,7 +11,7 @@ let nextId = 1;
 async function getCredentials() {
   const { token, salt } = await chrome.storage.local.get({ token: "", salt: "" });
   if (!token) throw new Error("Add your security token in the extension settings first.");
-  if (!salt) throw new Error("Add your salt in the extension settings first.");
+  if (!salt) throw new Error("Add your password in the extension settings first.");
   if (token !== conn.token || salt !== conn.salt) conn = { token, salt, sessionId: null, tools: null };
   return { token, salt };
 }
@@ -54,7 +54,7 @@ async function post(message) {
     throw new Error("Can't reach the memory service. Check your connection.");
   }
   if (res.status === 401) {
-    throw new Error("The security token or salt was rejected. Check them in the extension settings.");
+    throw new Error("The security token or password was rejected. Check them in the extension settings.");
   }
   if (res.status === 402) {
     throw new Error("Payment required: check your balance at status402.io.");
@@ -147,7 +147,7 @@ async function runTool(base, args) {
 }
 
 // A run can complete while a step inside it was refused by the backend (e.g. a
-// 422 when the salt can't decrypt a memory); that only shows in the step's result.
+// 422 when the password can't decrypt a memory); that only shows in the step's result.
 function findFailure(value) {
   if (!value || typeof value !== "object") return null;
   if (typeof value.status_code === "number" && value.status_code >= 400) {

@@ -389,3 +389,63 @@ button.primary:disabled {
 .muted a {
   color: var(--accent);
 }
+
+.label-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0 4px;
+}
+
+.label-row label {
+  margin: 0;
+}
+
+.info {
+  position: relative;
+  display: inline-flex;
+}
+
+.info-button {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--muted);
+  font: italic 600 11px/1 Georgia, "Times New Roman", serif;
+  cursor: help;
+}
+
+.info-button:hover,
+.info-button:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.info-tip {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: -8px;
+  z-index: 1;
+  width: 280px;
+  max-width: calc(100vw - 32px);
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--raised);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 400;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.18);
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+
+.info:hover .info-tip,
+.info:focus-within .info-tip {
+  visibility: visible;
+  opacity: 1;
+}

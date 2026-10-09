@@ -8,7 +8,7 @@ rather than by exact keywords.
 - `server/` — the earlier local FastAPI + ChromaDB backend; the extension no
   longer talks to it
 
-## 1. Get a security token and choose a salt
+## 1. Get a security token and choose a password
 
 Tokens are issued at [status402.io](https://status402.io). The extension talks
 to a fixed MCP endpoint and sends the token as a `Bearer` header:
@@ -17,8 +17,12 @@ to a fixed MCP endpoint and sends the token as a `Bearer` header:
 https://platform.status402.io/mcp/paid/veryliz/scope/dev/gozcu
 ```
 
-Every request also carries your salt in the `x-secret-key` header. Both the
-token and the salt are required.
+Every request also carries your password in the `x-secret-key` header. Both the
+token and the password are required.
+
+The password encrypts everything you save, and only the same password can
+decrypt it. It can't be recovered or reset: memories saved with a password you
+lose or change stay unreadable.
 
 ## 2. Load the extension
 
@@ -26,7 +30,7 @@ token and the salt are required.
 2. Turn on **Developer mode**.
 3. Click **Load unpacked** and choose the `extension/` folder.
 4. Open the extension's settings (⚙ in the popup), paste your security token and
-   salt, and click **Save and test connection**.
+   password, and click **Save and test connection**.
 
 ## 3. Use it
 

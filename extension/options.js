@@ -22,12 +22,12 @@ document.getElementById("options-form").addEventListener("submit", async (event)
   }
   const salt = saltInput.value.trim();
   if (!salt) {
-    setStatus("Enter your salt.", "error");
+    setStatus("Enter your password.", "error");
     return;
   }
-  // The salt travels as an HTTP header value, which must be printable ASCII.
+  // The password travels as an HTTP header value, which must be printable ASCII.
   if (!/^[\x20-\x7e]+$/.test(salt)) {
-    setStatus("The salt can only contain plain ASCII characters.", "error");
+    setStatus("The password can only contain plain ASCII characters.", "error");
     return;
   }
 
