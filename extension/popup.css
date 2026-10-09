@@ -2,6 +2,7 @@
   color-scheme: light dark;
   --bg: #ffffff;
   --surface: #f4f5f8;
+  --raised: #fafbfd;
   --text: #1b1d23;
   --muted: #6a7080;
   --border: #dcdfe6;
@@ -15,6 +16,7 @@
   :root {
     --bg: #1c1d22;
     --surface: #27292f;
+    --raised: #31343c;
     --text: #eceef2;
     --muted: #9aa1b0;
     --border: #3a3d46;
@@ -154,9 +156,23 @@ button.primary:disabled {
   cursor: default;
 }
 
+.save-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  margin-top: 10px;
+  background: var(--raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+#description-hint:empty {
+  display: none;
+}
+
 #save {
   width: 100%;
-  margin-top: 12px;
 }
 
 .status {
