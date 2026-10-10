@@ -138,7 +138,7 @@ async function callTool(base, args) {
 // memorise only starts the run and finishes on the service some minutes later.
 async function runTool(base, args) {
   const { payload } = await callTool(base, args);
-  if (["failed", "error"].includes(payload?.state)) {
+  if (payload?.ok === false || ["failed", "error"].includes(payload?.state)) {
     throw new Error(`"${base}" failed on the memory service.`);
   }
   const failure = findFailure(payload);
@@ -161,10 +161,15 @@ function findFailure(value) {
   return null;
 }
 
-// The run returns the matching memories as a plain list of content strings,
-// best match first; there is no id, date or distance to go with them.
+// The tool returns the matching memories as a plain list of content strings,
+// best match first; there is no id, date or distance to go with them. The list
+// sits under "result" (older replies used "return_value"), sometimes wrapped
+// once more as { ok, result: { result: [...] } }.
 function toResults(payload) {
-  const list = payload?.return_value;
+  let list = payload;
+  for (let depth = 0; depth < 3 && list && !Array.isArray(list); depth++) {
+    list = list.result ?? list.return_value;
+  }
   if (!Array.isArray(list)) return [];
   return list
     .map((item) => (typeof item === "string" ? { content: item } : item))
