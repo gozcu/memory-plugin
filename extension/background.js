@@ -5,36 +5,64 @@ const MCP_URL = "https://platform.status402.io/mcp/paid/veryliz/scope/dev/gozcu"
 const PROTOCOL_VERSION = "2025-03-26";
 
 // Per-credentials connection state: the MCP session and the server's tool names.
+// The browser stops an idle service worker after about 30 seconds, so the state
+// is mirrored in session storage (in memory only) to spare the next call a new handshake.
 let conn = { token: null, salt: null, sessionId: null, tools: null };
+let restored = false;
 let nextId = 1;
 
 async function getCredentials() {
   const { token, salt } = await chrome.storage.local.get({ token: "", salt: "" });
   if (!token) throw new Error("Add your security token in the extension settings first.");
   if (!salt) throw new Error("Add your password in the extension settings first.");
+  if (!restored) {
+    restored = true;
+    const { conn: kept } = await chrome.storage.session.get("conn");
+    if (kept) conn = kept;
+  }
   if (token !== conn.token || salt !== conn.salt) conn = { token, salt, sessionId: null, tools: null };
   return { token, salt };
 }
 
+function parseEvent(event) {
+  const data = event
+    .split(/\r?\n/)
+    .filter((line) => line.startsWith("data:"))
+    .map((line) => line.slice(5).trimStart())
+    .join("\n");
+  if (!data) return null;
+  try {
+    return JSON.parse(data);
+  } catch {
+    return null;
+  }
+}
+
 // The server may answer with plain JSON or with an SSE stream of JSON-RPC messages.
+// A stream is read as it arrives and dropped once the reply is in, because the
+// server can keep it open long after sending the reply.
 async function readRpcResponse(res, id) {
-  const text = await res.text();
   if (!(res.headers.get("content-type") ?? "").includes("text/event-stream")) {
+    const text = await res.text();
     return text ? JSON.parse(text) : null;
   }
-  for (const event of text.split(/\r?\n\r?\n/)) {
-    const data = event
-      .split(/\r?\n/)
-      .filter((line) => line.startsWith("data:"))
-      .map((line) => line.slice(5).trimStart())
-      .join("\n");
-    if (!data) continue;
-    try {
-      const msg = JSON.parse(data);
-      if (msg.id === id) return msg;
-    } catch {}
+  const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+  let buffer = "";
+  try {
+    for (;;) {
+      const { value, done } = await reader.read();
+      const events = (buffer + (value ?? "")).split(/\r?\n\r?\n/);
+      // The last piece is an event still being received, unless the stream has ended.
+      buffer = done ? "" : events.pop();
+      for (const event of events) {
+        const msg = parseEvent(event);
+        if (msg?.id === id) return msg;
+      }
+      if (done) return null;
+    }
+  } finally {
+    reader.cancel().catch(() => {});
   }
-  return null;
 }
 
 async function post(message) {
@@ -98,6 +126,7 @@ async function connect() {
   await post({ jsonrpc: "2.0", method: "notifications/initialized" });
   const { result } = await rpc("tools/list", {});
   conn.tools = (result?.tools ?? []).map((tool) => tool.name);
+  await chrome.storage.session.set({ conn });
 }
 
 // Tool names may carry a server prefix (e.g. "p1-gozcu-memorise").
@@ -178,6 +207,7 @@ function toResults(payload) {
 
 const routes = {
   health: async () => {
+    await chrome.storage.session.remove("conn");
     conn = { token: null, salt: null, sessionId: null, tools: null };
     await connect();
     const missing = ["memorise", "recollect", "forget"].filter((base) => !findTool(base));
