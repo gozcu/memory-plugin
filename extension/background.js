@@ -1,7 +1,7 @@
 // All MCP calls go through the service worker so a save keeps running
 // even if the popup is closed before the request finishes.
 
-const MCP_URL = "https://platform.status402.io/mcp/paid/veryliz/scope/dev/gozcu";
+const MCP_URL = "https://platform.status402.io/mcp/paid/veryliz/scope/dev/gozcu/group/memory";
 const PROTOCOL_VERSION = "2025-03-26";
 
 // Per-credentials connection state: the MCP session and the server's tool names.

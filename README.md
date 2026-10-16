@@ -14,7 +14,7 @@ Tokens are issued at [status402.io](https://status402.io). The extension talks
 to a fixed MCP endpoint and sends the token as a `Bearer` header:
 
 ```
-https://platform.status402.io/mcp/paid/veryliz/scope/dev/gozcu
+https://platform.status402.io/mcp/paid/veryliz/scope/dev/gozcu/group/memory
 ```
 
 Every request also carries your password in the `x-secret-key` header. Both the
