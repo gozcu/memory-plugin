@@ -329,16 +329,6 @@ button.primary:disabled {
   scroll-snap-align: start;
 }
 
-#search-loader {
-  display: flex;
-  justify-content: center;
-  margin: 6px 0 0;
-}
-
-#search-loader[hidden] {
-  display: none;
-}
-
 #carousel-nav {
   display: flex;
   align-items: center;
