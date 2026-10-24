@@ -225,15 +225,18 @@ button.primary:disabled {
   }
 }
 
-#search-progress {
-  margin-bottom: 8px;
+#search-form {
+  position: relative;
 }
 
+/* The bar lies over the input; it lets clicks through and stays translucent
+   so the query still reads underneath. */
 .progress {
-  height: 4px;
+  position: absolute;
+  inset: 0;
   overflow: hidden;
-  background: var(--surface);
-  border-radius: 2px;
+  border-radius: 6px;
+  pointer-events: none;
 }
 
 .progress div {
@@ -241,8 +244,7 @@ button.primary:disabled {
   width: 0;
   height: 100%;
   overflow: hidden;
-  background: var(--accent);
-  border-radius: 2px;
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
 /* A moving highlight keeps the bar alive while it waits near full. */
@@ -250,7 +252,7 @@ button.primary:disabled {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.55), transparent);
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.3), transparent);
   animation: progress-shimmer 1.4s linear infinite;
 }
 
@@ -261,6 +263,11 @@ button.primary:disabled {
   margin-top: 5px;
   color: var(--muted);
   font-size: 12px;
+}
+
+/* The flex display above would otherwise override the hidden attribute. */
+.progress-info[hidden] {
+  display: none;
 }
 
 .progress-stage::after {

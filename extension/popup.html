@@ -41,11 +41,10 @@
         </header>
         <form id="search-form" role="search">
           <input id="query" type="search" aria-label="Search your saved pages" placeholder="Ask about something you've saved…" autocomplete="off" />
+          <!-- While a search runs, the bar fills the input from behind a translucent layer. -->
+          <div id="search-progress-bar" class="progress" role="progressbar" aria-label="Searching" hidden><div></div></div>
         </form>
-      </div>
-      <div id="search-progress" hidden>
-        <div class="progress" role="progressbar" aria-label="Searching"><div></div></div>
-        <div class="progress-info">
+        <div id="search-progress" class="progress-info" hidden>
           <span id="search-stage" class="progress-stage" role="status"></span>
           <span id="search-elapsed" class="progress-elapsed" aria-hidden="true"></span>
         </div>

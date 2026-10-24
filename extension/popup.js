@@ -301,7 +301,7 @@ let progressHide = 0;
 
 function showProgress(active) {
   const box = $("search-progress");
-  const bar = box.querySelector(".progress");
+  const bar = $("search-progress-bar");
   const fill = bar.firstElementChild;
   clearInterval(progressTicker);
   clearTimeout(progressHide);
@@ -313,6 +313,7 @@ function showProgress(active) {
     fill.style.width = "100%";
     progressHide = setTimeout(() => {
       box.hidden = true;
+      bar.hidden = true;
     }, PROGRESS_FINISH_MS + 100);
     return;
   }
@@ -330,6 +331,7 @@ function showProgress(active) {
   };
 
   box.hidden = false;
+  bar.hidden = false;
   fill.style.transition = "none";
   fill.style.width = "0";
   fill.getBoundingClientRect(); // commit the reset before animating
