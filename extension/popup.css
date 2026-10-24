@@ -14,12 +14,12 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #1c1d22;
-    --surface: #27292f;
-    --raised: #31343c;
+    --bg: #2a2c33;
+    --surface: #34373f;
+    --raised: #3e414a;
     --text: #eceef2;
     --muted: #9aa1b0;
-    --border: #3a3d46;
+    --border: #4b4f5a;
     --accent: #8b84ff;
     --accent-text: #14151a;
     --error: #ff8a7a;
@@ -31,9 +31,21 @@
   box-sizing: border-box;
 }
 
+/* Chrome draws the popup window square, so the page is a rounded, shadowed
+   card on a transparent root. Chrome fills what shows through with its own
+   default background. */
+html:has(body:not(.options)) {
+  background: transparent;
+  /* Keeps the body's overflow on the card, so the popup itself still scrolls. */
+  overflow: auto;
+}
+
 body {
   width: 380px;
-  margin: 0;
+  margin: 6px;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   padding: 12px;
   background: var(--bg);
   color: var(--text);
@@ -44,6 +56,10 @@ body.options {
   width: auto;
   max-width: 460px;
   padding: 16px;
+  margin: 0;
+  border-radius: 0;
+  overflow: visible;
+  box-shadow: none;
 }
 
 header {
