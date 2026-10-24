@@ -6,15 +6,17 @@
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
-    <header>
-      <nav role="tablist">
-        <button role="tab" id="tab-save" aria-selected="true" aria-controls="panel-save">Save</button>
-        <button role="tab" id="tab-search" aria-selected="false" aria-controls="panel-search">Search</button>
-      </nav>
-      <button id="open-options" class="icon-button" title="Settings" aria-label="Settings">⚙</button>
-    </header>
+    <section id="panel-save" class="container" aria-labelledby="save-title">
+      <header class="container-header">
+        <h1 id="save-title">Save</h1>
+        <div class="header-actions">
+          <button id="open-search" class="icon-button" title="Search" aria-label="Search" aria-expanded="false" aria-controls="panel-search">
+            <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="6.5" cy="6.5" r="4.5" /><path d="M10 10l4 4" /></svg>
+          </button>
+          <button id="open-options" class="icon-button" title="Settings" aria-label="Settings">⚙</button>
+        </div>
+      </header>
 
-    <section id="panel-save" role="tabpanel" aria-labelledby="tab-save">
       <div class="page-card">
         <div id="page-title" class="page-title">Reading page…</div>
         <div id="page-url" class="page-url"></div>
@@ -31,11 +33,16 @@
       <div id="save-status" class="status" role="status"></div>
     </section>
 
-    <section id="panel-search" role="tabpanel" aria-labelledby="tab-search" hidden>
-      <form id="search-form">
-        <input id="query" type="search" placeholder="Ask about something you've saved…" autocomplete="off" />
-        <button class="primary" type="submit">Search</button>
-      </form>
+    <section id="panel-search" aria-labelledby="search-title" hidden>
+      <div id="search-card" class="container">
+        <header class="container-header">
+          <h1 id="search-title">Search</h1>
+          <button id="close-search" class="icon-button" type="button" title="Close search" aria-label="Close search">✕</button>
+        </header>
+        <form id="search-form" role="search">
+          <input id="query" type="search" aria-label="Search your saved pages" placeholder="Ask about something you've saved…" autocomplete="off" />
+        </form>
+      </div>
       <div id="search-progress" hidden>
         <div class="progress" role="progressbar" aria-label="Searching"><div></div></div>
         <div class="progress-info">

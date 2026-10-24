@@ -62,36 +62,31 @@ body.options {
   box-shadow: none;
 }
 
-header {
+/* Each view sits in a titled container: Save holds the whole form, Search
+   holds the search box with the results below it. */
+.container {
+  padding: 12px;
+  background: var(--raised);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.container-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
-nav {
+h1 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.header-actions {
   display: flex;
   gap: 4px;
-  padding: 3px;
-  background: var(--surface);
-  border-radius: 8px;
-}
-
-nav button {
-  padding: 5px 16px;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--muted);
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-nav button[aria-selected="true"] {
-  background: var(--bg);
-  color: var(--text);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.15);
 }
 
 .icon-button {
@@ -100,6 +95,18 @@ nav button[aria-selected="true"] {
   color: var(--muted);
   font-size: 16px;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 6px;
+}
+
+.icon-button:hover {
+  background: var(--surface);
+  color: var(--text);
 }
 
 .page-card {
@@ -206,10 +213,16 @@ button.primary:disabled {
   color: var(--success);
 }
 
-#search-form {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 8px;
+#search-card {
+  margin-bottom: 10px;
+  animation: search-open 0.15s ease-out;
+}
+
+@keyframes search-open {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
 }
 
 #search-progress {
@@ -275,6 +288,7 @@ button.primary:disabled {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  #search-card,
   .progress div::after,
   .progress-stage::after {
     animation: none;

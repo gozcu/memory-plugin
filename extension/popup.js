@@ -35,7 +35,7 @@ function extractPage() {
   };
 }
 
-// ---------- Save tab ----------
+// ---------- Save view ----------
 
 let page = null;
 let saveable = false;
@@ -126,7 +126,7 @@ async function savePage() {
   }
 }
 
-// ---------- Search tab ----------
+// ---------- Search view ----------
 
 function formatDate(iso) {
   const date = new Date(iso);
@@ -235,6 +235,8 @@ function showResults(q, results) {
   setStatus($("search-status"), results.length ? "" : "Nothing matched.");
 }
 
+let searching = false;
+
 async function runSearch() {
   const q = $("query").value.trim();
   const status = $("search-status");
@@ -246,8 +248,8 @@ async function runSearch() {
     chrome.storage.session.remove("lastSearch");
     return;
   }
-  const button = $("search-form").querySelector("button");
-  button.disabled = true;
+  if (searching) return;
+  searching = true;
   // Drop the previous answer right away so the loader stands where it was.
   $("results-heading").textContent = "";
   $("results").replaceChildren();
@@ -264,7 +266,7 @@ async function runSearch() {
   } finally {
     showLoader(false);
     showProgress(false);
-    button.disabled = false;
+    searching = false;
   }
 }
 
@@ -339,19 +341,29 @@ function showProgress(active) {
 
 // ---------- Wiring ----------
 
-function showTab(name) {
-  for (const tab of ["save", "search"]) {
-    $(`tab-${tab}`).setAttribute("aria-selected", String(tab === name));
-    $(`panel-${tab}`).hidden = tab !== name;
-  }
-  if (name === "search") {
-    $("query").focus();
-  }
-  chrome.storage.session.set({ tab: name });
+// Search mode shows the Search container and results in place of the Save one.
+function setSearchOpen(open, { restoreFocus = true } = {}) {
+  $("panel-save").hidden = open;
+  $("panel-search").hidden = !open;
+  $("open-search").setAttribute("aria-expanded", String(open));
+  if (open) $("query").focus();
+  else if (restoreFocus) $("open-search").focus();
+  chrome.storage.session.set({ tab: open ? "search" : "save" });
 }
 
-$("tab-save").addEventListener("click", () => showTab("save"));
-$("tab-search").addEventListener("click", () => showTab("search"));
+$("open-search").addEventListener("click", () => setSearchOpen(true));
+$("close-search").addEventListener("click", () => setSearchOpen(false));
+// Escape first clears the box, then closes search.
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape" || $("panel-search").hidden) return;
+  event.preventDefault();
+  if ($("query").value) {
+    $("query").value = "";
+    $("query").focus();
+  } else {
+    setSearchOpen(false);
+  }
+});
 $("open-options").addEventListener("click", () => chrome.runtime.openOptionsPage());
 $("save").addEventListener("click", savePage);
 $("description").addEventListener("input", updateSave);
@@ -364,14 +376,14 @@ $("search-form").addEventListener("submit", (event) => {
 });
 
 loadPage();
-// Closing the popup discards its page, so the last search and the open tab
-// are restored from session storage.
+// Closing the popup discards its page, so the last search and whether search
+// mode was open are restored from session storage.
 chrome.storage.session.get({ lastSearch: null, tab: "save" }).then(({ lastSearch, tab }) => {
   if (lastSearch) {
     $("query").value = lastSearch.q;
     showResults(lastSearch.q, lastSearch.results);
   }
-  if (tab === "search") showTab("search");
+  if (tab === "search") setSearchOpen(true);
 });
 chrome.storage.local.get({ token: "", salt: "" }).then(({ token, salt }) => {
   if (!token || !salt) {
