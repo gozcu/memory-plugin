@@ -248,16 +248,46 @@ async function runSearch() {
   }
   const button = $("search-form").querySelector("button");
   button.disabled = true;
+  // Drop the previous answer right away so the loader stands where it was.
+  $("results-heading").textContent = "";
+  $("results").replaceChildren();
+  updateCarousel();
+  chrome.storage.session.remove("lastSearch");
   setStatus(status, "");
   showProgress(true);
+  showLoader(true);
   try {
     const { results } = await send("search", { q });
     showResults(q, results);
   } catch (err) {
     setStatus(status, err.message, "error");
   } finally {
+    showLoader(false);
     showProgress(false);
     button.disabled = false;
+  }
+}
+
+// The spinning 3D logo is loaded on first use, since most popups never search.
+// stopLoader frees its WebGL context; loaderRun guards against a search that
+// finishes before the module has loaded.
+let stopLoader = null;
+let loaderRun = 0;
+
+async function showLoader(active) {
+  const box = $("search-loader");
+  const run = ++loaderRun;
+  stopLoader?.();
+  stopLoader = null;
+  box.hidden = !active;
+  if (!active) return;
+  try {
+    const { startLogoLoader } = await import("./logo-loader.js");
+    if (run !== loaderRun) return;
+    stopLoader = startLogoLoader(box);
+  } catch {
+    // Without WebGL the progress bar alone still shows that a search is running.
+    box.hidden = true;
   }
 }
 
