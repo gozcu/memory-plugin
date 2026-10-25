@@ -10,7 +10,7 @@
       <header class="container-header">
         <h1 id="save-title">Save</h1>
         <div class="header-actions">
-          <button id="open-search" class="icon-button" title="Search" aria-label="Search" aria-expanded="false" aria-controls="panel-search">
+          <button id="open-search" class="icon-button outlined" type="button" title="Search" aria-label="Search" aria-expanded="false" aria-controls="panel-search">
             <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="6.5" cy="6.5" r="4.5" /><path d="M10 10l4 4" /></svg>
           </button>
           <button id="open-options" class="icon-button" title="Settings" aria-label="Settings">⚙</button>
@@ -41,6 +41,7 @@
         </header>
         <form id="search-form" role="search">
           <input id="query" type="search" aria-label="Search your saved pages" placeholder="Ask about something you've saved…" autocomplete="off" />
+          <button id="run-search" class="icon-button outlined" type="submit" title="Search" aria-label="Search"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="6.5" cy="6.5" r="4.5" /><path d="M10 10l4 4" /></svg></button>
           <!-- While a search runs, the bar fills the input from behind a translucent layer. -->
           <div id="search-progress-bar" class="progress" role="progressbar" aria-label="Searching" hidden><div></div></div>
         </form>

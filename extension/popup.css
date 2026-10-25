@@ -213,6 +213,31 @@ button.primary:disabled {
   color: var(--success);
 }
 
+/* A bordered variant so the search icons read as buttons. */
+.icon-button.outlined {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.icon-button.outlined:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+#run-search {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  width: 26px;
+  height: 26px;
+}
+
+#query {
+  padding-right: 38px;
+}
+
 #search-card {
   margin-bottom: 10px;
   animation: search-open 0.15s ease-out;
