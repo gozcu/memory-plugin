@@ -328,7 +328,15 @@ function setSearchOpen(open, { restoreFocus = true } = {}) {
   chrome.storage.session.set({ tab: open ? "search" : "save" });
 }
 
-$("open-search").addEventListener("click", () => setSearchOpen(true));
+// Opening search from the Save form starts it fresh; an empty query runs the
+// same reset as submitting an empty box.
+$("open-search").addEventListener("click", () => {
+  if (!$("panel-save").hidden) {
+    $("query").value = "";
+    runSearch();
+  }
+  setSearchOpen(true);
+});
 $("close-search").addEventListener("click", () => setSearchOpen(false));
 // Escape first clears the box, then closes search.
 document.addEventListener("keydown", (event) => {

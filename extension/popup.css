@@ -238,6 +238,10 @@ button.primary:disabled {
   padding-right: 38px;
 }
 
+#query::-webkit-search-cancel-button {
+  cursor: pointer;
+}
+
 #search-card {
   margin-bottom: 10px;
   animation: search-open 0.15s ease-out;
